@@ -1,10 +1,28 @@
 steps:
+# Step 1: Build Docker image
 - name: gcr.io/cloud-builders/docker
-  args: ["build","-t","us-central1-docker.pkg.dev/qwiklabs-gcp-02-2b724eb1a61d/my-repository/hello-cloudbuild-dev:v1.0","."]
+  args:
+    [
+      "build",
+      "-t",
+      "us-central1-docker.pkg.dev/qwiklabs-gcp-02-2b724eb1a61d/my-repository/hello-cloudbuild-dev:v1.0",
+      "."
+    ]
+
+# Step 2: Push Docker image
 - name: gcr.io/cloud-builders/docker
-  args: ["push","us-central1-docker.pkg.dev/qwiklabs-gcp-02-2b724eb1a61d/my-repository/hello-cloudbuild-dev:v1.0"]
+  args:
+    [
+      "push",
+      "us-central1-docker.pkg.dev/qwiklabs-gcp-02-2b724eb1a61d/my-repository/hello-cloudbuild-dev:v1.0"
+    ]
+
+# Step 3: Deploy to DEV namespace
 - name: gcr.io/cloud-builders/kubectl
-  args: ["-n","dev","apply","-f","dev/deployment.yaml"]
+  args: ["-n", "dev", "apply", "-f", "dev/deployment.yaml"]
   env:
   - CLOUDSDK_COMPUTE_REGION=us-central1
   - CLOUDSDK_CONTAINER_CLUSTER=hello-cluster
+
+options:
+  logging: CLOUD_LOGGING_ONLY
