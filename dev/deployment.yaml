@@ -2,6 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: development-deployment
+  namespace: dev
+  labels:
+    app.kubernetes.io/name: dev-app
 spec:
   replicas: 3
   selector:
@@ -12,8 +15,56 @@ spec:
       labels:
         app: dev-app
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: dev-container
-        image: <todo>
+        image: us-central1-docker.pkg.dev/qwiklabs-gcp-02-2b724eb1a61d/my-repository/hello-cloudbuild-dev:v1.0
         ports:
         - containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8080
+          failureThreshold: 30
+          periodSeconds: 10
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: development-deployment-pdb
+  namespace: dev
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: dev-app
